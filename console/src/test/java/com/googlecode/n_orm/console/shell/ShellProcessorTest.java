@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 import com.googlecode.n_orm.StorageManagement;
 import com.googlecode.n_orm.console.commands.CommandList;
-import com.googlecode.n_orm.sample.businessmodel.BookStore;
 
 public class ShellProcessorTest
 {
