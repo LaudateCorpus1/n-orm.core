@@ -5,19 +5,15 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.googlecode.n_orm.cf.CollectionStorageTest;
+import com.googlecode.n_orm.performance.BasicPerformanceTest;
+import com.googlecode.n_orm.performance.PerformanceInserts;
 
 @RunWith(Suite.class)
 @SuiteClasses(value={
-		BasicTest.class,
-		IncrementsTest.class,
-		CollectionStorageTest.class,
-		PersistableSearchTest.class,
-		InheritanceTest.class,
-		ReveresedOrderSearchTest.class,
-		EvolutionTest.class
-		//ImportExportTest.class
+		// PerformanceInserts.class,
+		BasicPerformanceTest.class
 })
 
-public class GenericTests {
+public class PerformanceTests {
 
 }
