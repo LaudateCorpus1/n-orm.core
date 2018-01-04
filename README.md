@@ -42,7 +42,7 @@ public class Product {
 }
 ```
 
-Thanks to [aspect-oriented programming](http://en.wikipedia.org/wiki/Aspect-oriented_programming), the [Persisting annotation](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/Persisting.html) automatically makes the Product class implement [all necessary behavior](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/PersistingElement.html) for storing and retrieving an element in the data store:
+Thanks to [aspect-oriented programming](http://en.wikipedia.org/wiki/Aspect-oriented_programming), the [Persisting annotation](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/Persisting.html) automatically makes the Product class implement [all necessary behavior](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/PersistingElement.html) for storing and retrieving an element in the data store:
 ``` java
 Product p = new Product();
 p.trademark = "ACME"; //Could be accessed through setters or getters
@@ -59,7 +59,7 @@ p.activate();
 assert p.number == 198;
 ```
 
-An [embedded query language](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/query/ConstraintBuilder.html) may help in case you need to look for elements whose keys are in a given range:
+An [embedded query language](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/query/ConstraintBuilder.html) may help in case you need to look for elements whose keys are in a given range:
 ``` java
 Set<Product> prs = StorageManagement.findElements()
 	.ofClass(Product.class)
@@ -68,32 +68,31 @@ Set<Product> prs = StorageManagement.findElements()
 	.withAtMost(1000).elements().go();
 ```
 
-More information is available [to create a data model](https://github.com/fondemen/n-orm/wiki/DataModel).
+More information is available [to create a data model](https://github.com/fondemen/n-orm.core/wiki/DataModel).
 
-See also the [GettingStarted](https://github.com/fondemen/n-orm/wiki/GettingStarted) section to start working.
-You might also want to have a look at the [API](https://github.com/fondemen/n-orm/wiki/API).
+See also the [GettingStarted](https://github.com/fondemen/n-orm.core/wiki/GettingStarted) section to start working.
 
-A [sample project](https://github.com/fondemen/n-orm/tree/master/sample) is available so that you can start with something that is immediately working.
+A [sample project](https://github.com/fondemen/n-orm.sample/) is available so that you can start with something that is immediately working.
 
 # Main features #
 
   * No additional persistency layer like a DAO, or explicit mapping such as an XML file of mandatory options for annotations
-  * Transforming a persisting element and its content so that it can enter/be retreived into/from a [Store](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/storeapi/Store.html) ; possible attributes are given [here](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/Persisting.html).
+  * Transforming a persisting element and its content so that it can enter/be retreived into/from a [Store](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/storeapi/Store.html) ; possible attributes are given [here](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/Persisting.html).
   * Inferring identifiers from an ordered set of properties marked as keys.
   * Persisting Set and Maps properties.
   * Inheritance in persisting classes and properties types.
   * Storing only that information that have changed since last activation or store action.
   * No need to generate a schema.
-  * [Embedded language](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/query/ConstraintBuilder.html) for searching elements depending on their keys (though not on their properties).
-  * [Incrementing](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/Incrementing.html) properties and maps.
+  * [Embedded language](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/query/ConstraintBuilder.html) for searching elements depending on their keys (though not on their properties).
+  * [Incrementing](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/Incrementing.html) properties and maps.
   * Possibility to use different stores for different parts of your data model.
   * Support for remote procedures (e.g. map/reduce in HBase)
-  * [Overloadable store choice](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/Persisting.html) (e.g. one store for testing and another for production)
-  * [Write-back caching](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/cache/write/WriteRetentionStore.html)
-  * [Federated tables](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/Persisting.html#federated--)
-  * [Store activity listenening](https://fondemen.github.io/n-orm/storage/apidocs/com/googlecode/n_orm/PersistingElement.html#addPersistingElementListener-com.googlecode.n_orm.PersistingElementListener-)
+  * [Overloadable store choice](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/Persisting.html) (e.g. one store for testing and another for production)
+  * [Write-back caching](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/cache/write/WriteRetentionStore.html)
+  * [Federated tables](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/Persisting.html#federated--)
+  * [Store activity listenening](https://fondemen.github.io/n-orm.core/storage/apidocs/com/googlecode/n_orm/PersistingElement.html#addPersistingElementListener-com.googlecode.n_orm.PersistingElementListener-)
 
-However, n-orm still needs you to properly understand the [DataModel](https://github.com/fondemen/n-orm/wiki/DataModel), so that you can properly think you data model. You may want to look for HBase or Cassandra tutorials around to  get familiar with this new way of thinking data models.
+However, n-orm still needs you to properly understand the [DataModel](https://github.com/fondemen/n-orm.core/wiki/DataModel), so that you can properly think you data model. You may want to look for HBase or Cassandra tutorials around to  get familiar with this new way of thinking data models.
 
 # Contact #
 
