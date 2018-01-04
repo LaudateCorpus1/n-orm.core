@@ -12,7 +12,7 @@ n-orm is neither an object-database mapping, nor it addresses specifically relat
 
 To keep n-orm simple, it is not possible to use any Java data model, nor any legacy database. n-orm is more a Java view on a column-oriented database, which means that the data model (i.e. Java classes) has to be written according to certain (simple) constraints.
 
-Different data stores are possible, especially column-oriented data stores such as [HBase](http://hbase.apache.org/), [Cassandra](http://cassandra.apache.org/) or [Google BigTable](http://labs.google.com/papers/bigtable.html), though only HBase, [MongoDB](https://github.com/fondemen/n-orm.mongo/) and [Redis](https://github.com/fondemen/n-orm.redis/) are supported so far (help would be appreciated ;-)).
+Different data stores are possible, especially column-oriented data stores such as [HBase](http://hbase.apache.org/), [Cassandra](http://cassandra.apache.org/) or [Google BigTable](http://labs.google.com/papers/bigtable.html), though only [HBase](https://github.com/fondemen/n-orm.hbase/), [MongoDB](https://github.com/fondemen/n-orm.mongo/) and [Redis](https://github.com/fondemen/n-orm.redis/) are supported so far (help would be appreciated ;-)).
 
 # Why yet another persistence layer tool ? #
 
