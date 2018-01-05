@@ -153,6 +153,7 @@
 						<phase>prepare-package</phase>
 						<goals>
 							<goal>report</goal>
+							<goal>test</goal>
 						</goals>
 					</execution>
 				</executions>
