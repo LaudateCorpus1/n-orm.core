@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fondemen/n-orm.core.svg?branch=master)](https://travis-ci.org/fondemen/n-orm.core)
+
 # What is n-orm #
 
 n-orm offers a simple persistence layer for Java.
