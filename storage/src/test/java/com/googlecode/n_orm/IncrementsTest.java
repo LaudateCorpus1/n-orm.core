@@ -194,7 +194,7 @@ public class IncrementsTest {
 		assertEquals((short)4, e.getColumnFamily("incrementingFamily").getIncrement("val"));
 	}
 	
-	@Test
+	@Test(timeout=10000)
 	public void multiThreadedIncr() throws Exception {
 		long id = System.currentTimeMillis();
 		Incrementer incrementer = new Incrementer(id);
@@ -214,6 +214,15 @@ public class IncrementsTest {
 		e.activate("incrementingFamily");
 		assertEquals(4*100, e.incrementing);
 		assertEquals(4*100, e.incrementingFamily.get("qualifier").shortValue());
-		e.delete();
+		while (true) {
+			try {
+				e.delete();
+				break;
+			} catch (AssertionError r) {
+				// It seems hard for HBase to remove a counter-like row...
+				Thread.sleep(100);
+			}
+			
+		}
 	}
 }

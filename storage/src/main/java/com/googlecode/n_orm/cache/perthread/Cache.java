@@ -288,12 +288,25 @@ availableCachesCheck:while (ai.hasNext()) {
 			res = new Cache();
 		}
 		
+		assert assertHasCache(res);
+		
+		return res;
+	}
+	
+	/**
+	 * Asserts current Thread has the proper cache
+	 */
+	private static boolean assertHasCache(Cache res) {
+		
 		assert isValid(res.thread);
 		assert !res.isClosed();
 		assert !availableCaches.contains(res);
-		assert perThreadCaches.get(Thread.currentThread()) == res;
 		
-		return res;
+		synchronized(perThreadCaches) {
+			assert perThreadCaches.get(Thread.currentThread()) == res;
+		}
+		
+		return true;
 	}
 	
 	/**
