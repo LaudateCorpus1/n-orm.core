@@ -291,7 +291,7 @@ public aspect StoreSelector {
 		}
     }
     
-    private void populateArguments(Map<String, Object> properties, Class<?>[] types, List<Object> args) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException {
+    private void populateArguments(Map<String, Object> properties, Class<?>[] types, List<Object> args) throws Exception {
 		int i = 1;
 		for (Class<?> c : types) {
 			Object val = properties.get(Integer.toString(i));
@@ -368,9 +368,7 @@ public aspect StoreSelector {
 	}
 	
 	private Object toObject(Map<String, Object> properties)
-			throws ClassNotFoundException, IllegalAccessException,
-			InvocationTargetException, NoSuchMethodException,
-			NoSuchFieldException {
+			throws Exception {
 		Class<?> storeClass = Class.forName((String)properties.get(STORE_DRIVERCLASS_PROPERTY));
 		Object ret;
 		if (properties.containsKey(STORE_DRIVERCLASS_STATIC_ACCESSOR)) {
@@ -399,7 +397,7 @@ public aspect StoreSelector {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private Object convert(Object val, Class<?> c) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException {
+	private Object convert(Object val, Class<?> c) throws Exception {
 		if (val instanceof Map) {
 			Object ret = toObject((Map<String, Object>) val);
 			if (! c.isInstance(ret)) {

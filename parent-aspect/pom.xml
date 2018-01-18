@@ -38,24 +38,17 @@
 					<target>${java.version}</target>
 					<complianceLevel>${java.version}</complianceLevel>
 					<Xlint>adviceDidNotMatch=ignore</Xlint>
+					<includes>
+						<include>**/*.java</include>
+						<include>**/*.aj</include>
+					</includes>
 				</configuration>
 				<executions>
 
 					<execution>
-						<id>compile</id>
 						<goals>
 							<goal>compile</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>test-compile</id>
-						<goals>
 							<goal>test-compile</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>aspectj-report</id>
-						<goals>
 							<goal>aspectj-report</goal>
 						</goals>
 					</execution>

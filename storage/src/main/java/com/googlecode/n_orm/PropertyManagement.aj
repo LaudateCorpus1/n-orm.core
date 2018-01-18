@@ -1,5 +1,8 @@
 package com.googlecode.n_orm;
 
+import java.io.IOException;
+import java.lang.invoke.CallSite;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -13,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.WeakHashMap;
+import java.util.logging.Logger;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.aspectj.lang.SoftException;
@@ -25,6 +30,11 @@ import com.googlecode.n_orm.KeyManagement;
 import com.googlecode.n_orm.Persisting;
 import com.googlecode.n_orm.PersistingElement;
 import com.googlecode.n_orm.PropertyManagement;
+import com.googlecode.n_orm.accessor.BeanUtilsPropertyAccessor;
+import com.googlecode.n_orm.accessor.LambdaPropertyAccessor;
+import com.googlecode.n_orm.accessor.MultiplePropertyAccessor;
+import com.googlecode.n_orm.accessor.PropertyAccessor;
+import com.googlecode.n_orm.accessor.ReflectPropertyAccessor;
 import com.googlecode.n_orm.cf.ColumnFamily;
 import com.googlecode.n_orm.cf.ColumnFamily.ChangeKind;
 import com.googlecode.n_orm.cf.MapColumnFamily;
@@ -468,8 +478,13 @@ public aspect PropertyManagement {
 	
 	after(PersistingElement self) returning: attUpdated(self) {
 
-		PropertyFamily pf = self.getPropertiesColumnFamily();
 		Field f = ((FieldSignature)thisJoinPointStaticPart.getSignature()).getField();
+		this.fieldChanged(self, f);
+	}
+	
+	public void fieldChanged(PersistingElement self, Field f) {
+
+		PropertyFamily pf = self.getPropertiesColumnFamily();
 		KeyManagement km = KeyManagement.getInstance();
 		if (km.isKey(f))
 			return;
@@ -496,35 +511,84 @@ public aspect PropertyManagement {
 			throw new RuntimeException(x);
 		}
 	}
+	
+	private final Map<Field, PropertyAccessor> propertyAccessor;
+	
+	public PropertyManagement() {
+		propertyAccessor = new HashMap<>();
+	}
+	
+	private Boolean hasJavaTooling = null;
+	
+	private PropertyAccessor getAccessor(Field property) throws Exception {
+		if (this.propertyAccessor != null) {
+			PropertyAccessor accessor = this.propertyAccessor.get(property);
+			if (accessor == null) {
+				
+				synchronized(property) {
+
+					accessor = this.propertyAccessor.get(property);
+					
+					if (accessor == null) {
+						
+						if (this.hasJavaTooling == null) {
+							try {
+								Class<?> clazz = Class.forName("javax.tools.JavaCompiler");
+								clazz = Class.forName("com.googlecode.n_orm.accessor.GencodePropertyAccessor");
+								this.hasJavaTooling = true;
+							} catch (Throwable t) {
+								System.err.println("No Java tooling available ; try running JDK instead");
+								this.hasJavaTooling = false;
+							}
+						}
+				
+						try {
+							property.setAccessible(true);
+						} catch (Exception x) {}
+						
+						List<PropertyAccessor> accessors = new ArrayList<>(4);
+						
+						if (this.hasJavaTooling) {
+							try {
+								accessors.add(new com.googlecode.n_orm.accessor.GencodePropertyAccessor(property));
+							} catch (Throwable t) {
+								System.out.println(this.toString() + ": " + property.toGenericString());
+							}
+						}
+						
+						try {
+							accessors.add(new LambdaPropertyAccessor(property));
+						} catch (Throwable t) {}
+						
+						try {
+							accessors.add(new ReflectPropertyAccessor(property));
+						} catch (Throwable t) {}
+						
+						try {
+							accessors.add(new BeanUtilsPropertyAccessor(property));
+						} catch (Throwable t) {}
+						
+						accessor = new MultiplePropertyAccessor(accessors);
+						
+						this.propertyAccessor.put(property, accessor);
+					}
+				}
+			}
+			return accessor;
+		}
+		return null;
+	}
 
 	public Object readValue(Object self, Field property)
-			throws IllegalAccessException, InvocationTargetException,
-			NoSuchMethodException {
-		try {
-			return property.get(self);
-		} catch (Exception x) {
-			return PropertyUtils.getProperty(self, property.getName());
-		}
+			throws Exception {
+		
+		return this.getAccessor(property).getValue(self);
 	}
 
 	public void setValue(Object self, Field property, Object value)
-			throws IllegalAccessException, InvocationTargetException,
-			NoSuchMethodException {
-		try {
-			property.set(self, value);
-		} catch (Exception x) {
-			try {
-				PropertyUtils.setProperty(self, property.getName(), value);
-			} catch (Exception y) {
-				throw new SoftException(x);
-			}
-		}
-	}
-	
-	before(Field f) : (call(Object Field.get(Object)) || call(void Field.set(Object, Object))) && target(f) && within(PropertyManagement) {
-		try {
-			f.setAccessible(true);
-		} catch (SecurityException x) {}
+			throws Exception {
+		
+		this.getAccessor(property).setValue(self, value);
 	}
 
 }

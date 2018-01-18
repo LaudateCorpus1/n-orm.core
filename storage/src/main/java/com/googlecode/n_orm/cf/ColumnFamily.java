@@ -151,7 +151,6 @@ public abstract class ColumnFamily<T> implements Comparable<ColumnFamily<T>> {
 
 	public void rebuild(Map<String, byte[]> rawData) throws DatabaseNotReachedException {
 		this.collection.clear();
-		this.clearChanges();
 		String id = this.owner.getIdentifier();
 		assert id != null;
 		if (rawData != null)
@@ -160,6 +159,7 @@ public abstract class ColumnFamily<T> implements Comparable<ColumnFamily<T>> {
 			}
 		setActivated();
 		this.storeToPOJO();
+		this.clearChanges();
 		assert ! this.hasChanged();
 	}
 
