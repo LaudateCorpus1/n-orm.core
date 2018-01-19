@@ -5,7 +5,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -300,12 +299,18 @@ public aspect KeyManagement {
 			keyNames = Collections.unmodifiableList(keyNames);
 constructorSearch:
 			for (Constructor<?> constructor : type.getConstructors()) {
-				Parameter[] parameters = constructor.getParameters();
+				Annotation[][] parameters = constructor.getParameterAnnotations();
 				if (parameters.length == 0) continue; // Ignoring default constructor
 				List<String> paramKeyNames = new ArrayList<String>(parameters.length);
 				for (int pi = 0; pi < parameters.length; ++pi) {
-					Parameter parameter = parameters[pi];
-					KeyMap ann = parameter.getAnnotation(KeyMap.class);
+					Annotation[] parameter = parameters[pi];
+					KeyMap ann = null;
+					for (int ai = 0; ai < parameter.length; ++ai) {
+						if (parameter[ai] instanceof KeyMap) {
+							ann = (KeyMap) parameter[ai];
+							break;
+						}
+					}
 					if (ann == null) {
 						if (pi > 0) throw new IllegalArgumentException("Constructor " + constructor + " should define all or none of its parameters with @KeyMap");
 						continue constructorSearch;
