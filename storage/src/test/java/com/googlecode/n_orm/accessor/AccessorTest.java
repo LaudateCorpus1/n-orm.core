@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +27,8 @@ import com.googlecode.n_orm.utils.LongAdder;
 @RunWith(Parameterized.class)
 public class AccessorTest {
 	
+	private static final int PERF_TURNS = 100_000;
+
 	public static interface Element {
 		String value();
 		
@@ -458,7 +461,7 @@ public class AccessorTest {
 	public void readPerf() throws Exception {
 		if (this.read) {
 			long start = System.nanoTime();
-			for (int i = 0; i < 1_000_000; i++) {
+			for (int i = 0; i < PERF_TURNS; i++) {
 				String expected = Integer.toString(i);
 				Element bean = this.beanClass.newInstance();
 				bean.value(expected);
@@ -498,7 +501,7 @@ public class AccessorTest {
 	public void writePerf() throws Exception {
 		if (this.write) {
 			long start = System.nanoTime();
-			for (int i = 0; i < 1_000_000; i++) {
+			for (int i = 0; i < PERF_TURNS; i++) {
 				String expected = Integer.toString(i);
 				Element bean = this.beanClass.newInstance();
 				this.propertyAccessor.setValue(bean, expected);

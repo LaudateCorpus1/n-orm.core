@@ -1,5 +1,6 @@
 package com.googlecode.n_orm;
 
+import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.invoke.CallSite;
 import java.lang.ref.WeakReference;
@@ -30,6 +31,7 @@ import com.googlecode.n_orm.KeyManagement;
 import com.googlecode.n_orm.Persisting;
 import com.googlecode.n_orm.PersistingElement;
 import com.googlecode.n_orm.PropertyManagement;
+import com.googlecode.n_orm.accessor.AccessorUtils;
 import com.googlecode.n_orm.accessor.BeanUtilsPropertyAccessor;
 import com.googlecode.n_orm.accessor.LambdaPropertyAccessor;
 import com.googlecode.n_orm.accessor.MultiplePropertyAccessor;
@@ -512,71 +514,50 @@ public aspect PropertyManagement {
 		}
 	}
 	
-	private final Map<Field, PropertyAccessor> propertyAccessor;
-	
-	public PropertyManagement() {
-		propertyAccessor = new HashMap<>();
-	}
-	
-	private Boolean hasJavaTooling = null;
+	private final Map<Field, PropertyAccessor> propertyAccessor = new HashMap<>();
 	
 	private PropertyAccessor getAccessor(Field property) throws Exception {
-		if (this.propertyAccessor != null) {
-			PropertyAccessor accessor = this.propertyAccessor.get(property);
-			if (accessor == null) {
-				
-				synchronized(property) {
+		PropertyAccessor accessor = this.propertyAccessor.get(property);
+		if (accessor == null) {
+			
+			synchronized(property) {
 
-					accessor = this.propertyAccessor.get(property);
-					
-					if (accessor == null) {
-						
-						if (this.hasJavaTooling == null) {
-							try {
-								Class<?> clazz = Class.forName("javax.tools.JavaCompiler");
-								clazz = Class.forName("com.googlecode.n_orm.accessor.GencodePropertyAccessor");
-								this.hasJavaTooling = true;
-							} catch (Throwable t) {
-								System.err.println("No Java tooling available ; try running JDK instead");
-								this.hasJavaTooling = false;
-							}
-						}
+				accessor = this.propertyAccessor.get(property);
 				
-						try {
-							property.setAccessible(true);
-						} catch (Exception x) {}
+				if (accessor == null) {
+			
+					try {
+						property.setAccessible(true);
+					} catch (Exception x) {}
 						
-						List<PropertyAccessor> accessors = new ArrayList<>(4);
-						
-						if (this.hasJavaTooling) {
-							try {
-								accessors.add(new com.googlecode.n_orm.accessor.GencodePropertyAccessor(property));
-							} catch (Throwable t) {
-								System.out.println(this.toString() + ": " + property.toGenericString());
-							}
-						}
-						
-						try {
-							accessors.add(new LambdaPropertyAccessor(property));
-						} catch (Throwable t) {}
-						
-						try {
-							accessors.add(new ReflectPropertyAccessor(property));
-						} catch (Throwable t) {}
-						
-						try {
-							accessors.add(new BeanUtilsPropertyAccessor(property));
-						} catch (Throwable t) {}
-						
-						accessor = new MultiplePropertyAccessor(accessors);
-						
-						this.propertyAccessor.put(property, accessor);
-					}
+					
+					PropertyDescriptor descriptor = AccessorUtils.getPropertyDescriptor(property);
+					
+					List<PropertyAccessor> accessors = new ArrayList<>(4);
+					
+					try {
+						accessors.add(new com.googlecode.n_orm.accessor.GencodePropertyAccessor(property, descriptor));
+					} catch (Throwable t) {}
+
+					try {
+						accessors.add(new LambdaPropertyAccessor(property, descriptor));
+					} catch (Throwable t) {}
+					
+					try {
+						accessors.add(new ReflectPropertyAccessor(property));
+					} catch (Throwable t) {}
+
+					try {
+						accessors.add(new BeanUtilsPropertyAccessor(property, descriptor));
+					} catch (Throwable t) {}
+					
+					accessor = new MultiplePropertyAccessor(accessors);
+					
+					this.propertyAccessor.put(property, accessor);
 				}
 			}
-			return accessor;
 		}
-		return null;
+		return accessor;
 	}
 
 	public Object readValue(Object self, Field property)
@@ -589,6 +570,7 @@ public aspect PropertyManagement {
 			throws Exception {
 		
 		this.getAccessor(property).setValue(self, value);
+		if (self instanceof PersistingElement) this.fieldChanged((PersistingElement)self, property);
 	}
 
 }

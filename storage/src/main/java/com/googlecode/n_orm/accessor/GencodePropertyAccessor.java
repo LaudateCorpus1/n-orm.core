@@ -11,8 +11,12 @@ import org.mdkt.compiler.InMemoryJavaCompiler;
 public class GencodePropertyAccessor implements PropertyAccessor {
 
 	private PropertyAccessor accessor;
-
+	
 	public GencodePropertyAccessor(Field f) throws Exception {
+		this(f, AccessorUtils.getPropertyDescriptor(f));
+	}
+
+	public GencodePropertyAccessor(Field f, PropertyDescriptor pd) throws Exception {
 		String readAccess = null, writeAccess = null;
 		final String accessPackageName = "com.googlecode.n_orm.genaccess." + f.getDeclaringClass().getPackage().getName();
 		final String sourceClassQName = f.getDeclaringClass().getCanonicalName();
@@ -25,39 +29,38 @@ public class GencodePropertyAccessor implements PropertyAccessor {
 			String access = (Modifier.isStatic(f.getModifiers()) ? sourceClassQName : castedSelf) + '.' + f.getName();
 			readAccess = "return " + access;
 			writeAccess = Modifier.isFinal(f.getModifiers()) ? "throw new IllegalAccessError()" : access + " = " + castedValue;
-		} else {
-			for (PropertyDescriptor pd : PropertyUtils.getPropertyDescriptors(f.getDeclaringClass())) {
-				if (pd.getName().equals(f.getName())) {
-					Method readM = pd.getReadMethod(); if (readM != null && !Modifier.isPublic(readM.getModifiers())) readM = null;
-					Method writeM = pd.getWriteMethod(); if (writeM != null && !Modifier.isPublic(writeM.getModifiers())) writeM = null;
-					if (readM == null && writeM == null) throw new IllegalAccessException();
-					if (readM == null) {
-						readAccess = "throw new IllegalAccessException()";
-					} else {
-						readAccess = "return " + (Modifier.isStatic(readM.getModifiers()) ? sourceClassQName : castedSelf) + '.' + readM.getName() + "()";
-					}
-					
-					if (writeM == null) {
-						writeAccess = "throw new IllegalAccessException()";
-					} else {
-						writeAccess = (Modifier.isStatic(writeM.getModifiers()) ? sourceClassQName : castedSelf) + '.' + writeM.getName() + castedValue;
-					}
-					break;
-				}
+			
+		} else if (pd != null) {
+			Method readM = pd.getReadMethod(); if (readM != null && !Modifier.isPublic(readM.getModifiers())) readM = null;
+			Method writeM = pd.getWriteMethod(); if (writeM != null && !Modifier.isPublic(writeM.getModifiers())) writeM = null;
+			
+			if (readM == null && writeM == null) throw new IllegalAccessException();
+			if (readM == null) {
+				readAccess = "throw new IllegalAccessException()";
+			} else {
+				readAccess = "return " + (Modifier.isStatic(readM.getModifiers()) ? sourceClassQName : castedSelf) + '.' + readM.getName() + "()";
 			}
-			if (readAccess == null || writeAccess == null) throw new IllegalAccessException("Can't find any accessor for " + f);
+			
+			if (writeM == null) {
+				writeAccess = "throw new IllegalAccessException()";
+			} else {
+				writeAccess = (Modifier.isStatic(writeM.getModifiers()) ? sourceClassQName : castedSelf) + '.' + writeM.getName() + castedValue;
+			}
+			
+		} else {
+			throw new IllegalAccessException("Can't find any accessor for " + f);
 		}
 		
         final String source = "package " + accessPackageName + ";\n"
-                + "public final class " + accessClassName + " implements com.googlecode.n_orm.accessor.PropertyAccessor {\n"
-                        + "    public Object getValue(Object self) throws Exception {\n"
-                        + "        " + readAccess + ";\n"
-                        + "    }\n"
-                        + "    @SuppressWarnings({\"unchecked\", \"rawtypes\"})\n"
-                        + "    public void setValue(Object self, Object value) throws Exception {\n"
-                        + "        " + writeAccess + ";\n"
-                        + "    }\n"
-                + "}";
+        					+ "public final class " + accessClassName + " implements com.googlecode.n_orm.accessor.PropertyAccessor {\n"
+        					+ "    public Object getValue(Object self) throws Exception {\n"
+        					+ "        " + readAccess + ";\n"
+        					+ "    }\n"
+        					+ "    @SuppressWarnings({\"unchecked\", \"rawtypes\"})\n"
+        					+ "    public void setValue(Object self, Object value) throws Exception {\n"
+        					+ "        " + writeAccess + ";\n"
+        					+ "    }\n"
+        					+ "}";
         
 		@SuppressWarnings("unchecked")
 		Class<? extends PropertyAccessor> compiledClass = (Class<? extends PropertyAccessor>) InMemoryJavaCompiler
