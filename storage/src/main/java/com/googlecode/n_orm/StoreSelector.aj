@@ -258,50 +258,76 @@ public aspect StoreSelector {
     private Object buildStore(String builderName, Class<?> storeClass, Map<String, Object> properties) {
 		//Detecting parameters number
 		int pmnr = 0;
-		while (properties.get(Integer.toString(pmnr+1)) != null)
+		StringBuilder paramRep = new StringBuilder();
+		Object argRep;
+		paramRep.append('(');
+		while ((argRep = properties.get(Integer.toString(pmnr+1))) != null) {
 			pmnr++;
+			if (pmnr > 1) paramRep.append(", ");
+			paramRep.append(argRep);
+		}
+		paramRep.append(')');
 		
-		// Parameters values
-		List<Object> args = new ArrayList<Object>(pmnr);
+		Exception cause = null;
 		
 		if (builderName == null) {
 			//Finding constructor to invoke
 			for (Constructor<?> c : storeClass.getConstructors()) {
 				if (c.getParameterTypes().length == pmnr) {
 					try {
-						populateArguments(properties, c.getParameterTypes(), args);
-						return c.newInstance(args.toArray());
-					} catch (Exception x) {}
+						Object[] args;
+						try {
+							args = populateArguments(properties, c.getParameterTypes());
+						} catch (IllegalArgumentException x) {
+							Logger.getLogger(StoreSelector.class.getName()).log(Level.FINE, "Cannot use " + c + " for launching store (incompatible argument types for " + paramRep + "): " + x.getMessage(), x);
+							if (cause == null) cause = x;
+							continue;
+						}
+						return c.newInstance(args);
+					} catch (Exception x) {
+						Logger.getLogger(StoreSelector.class.getName()).log(Level.WARNING, "Cannot use " + c + " for launching store with parameters " + paramRep + ": " + x.getMessage(), x);
+						cause = x;
+					}
 				}
 			}
-			throw new IllegalArgumentException("Could not find constructor with compatible " + pmnr + " arguments in " + storeClass);
+			throw new IllegalArgumentException("Could not find suitable constructor with compatible arguments " + paramRep + " in " + storeClass, cause);
 		} else {
 			//Finding static method to invoke
 			for (Method m : storeClass.getMethods()) {
 				if (m.getName().equals(builderName) && (m.getModifiers() & Modifier.STATIC) != 0 && m.getParameterTypes().length == pmnr) {
 					try {
-						populateArguments(properties, m.getParameterTypes(), args);
-						return m.invoke(null, args.toArray());
+						Object[] args;
+						try {
+							args = populateArguments(properties, m.getParameterTypes());
+						} catch (IllegalArgumentException x) {
+							Logger.getLogger(StoreSelector.class.getName()).log(Level.FINE, "Cannot use " + m + " for launching store (incompatible argument types for " + paramRep + "): " + x.getMessage(), x);
+							if (cause == null) cause = x;
+							continue;
+						}
+						return m.invoke(null, args);
 					} catch (Exception x) {
-						Logger.getLogger(StoreSelector.class.getName()).log(Level.WARNING, "Cannot use " + m + " for launching store: " + x.getMessage(), x);
+						Logger.getLogger(StoreSelector.class.getName()).log(Level.WARNING, "Cannot use " + m + " for launching store with parameters " + paramRep + ": " + x.getMessage(), x);
+						cause = x;
 					}
 				}
 			}
-			throw new IllegalArgumentException("Could not find static accessor method " + builderName + " with compatible " + pmnr + " arguments in " + storeClass);
+			throw new IllegalArgumentException("Could not find suitable static accessor method " + builderName + " with compatible arguments " + paramRep + " in " + storeClass, cause);
 		}
     }
     
-    private void populateArguments(Map<String, Object> properties, Class<?>[] types, List<Object> args) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException {
+    private Object[] populateArguments(Map<String, Object> properties, Class<?>[] types) throws ClassNotFoundException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException {
 		int i = 1;
+		Object[] ret = new Object[types.length];
 		for (Class<?> c : types) {
 			Object val = properties.get(Integer.toString(i));
 			if (val == null) {
 				throw new IllegalArgumentException("Missing required value " + Integer.toString(i));
 			}
 			val = convert(val, c);
-			args.add(val);
+			ret[i-1] = val;
 			i++;
 		}
+		return ret;
     }
 	
 	public Store getStoreFor(Class<? extends PersistingElement> clazz) throws DatabaseNotReachedException {
